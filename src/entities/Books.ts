@@ -30,6 +30,12 @@ class Books {
   @Column()
   price: number;
 
+  @Column()
+  seller: string;
+
+  @Column()
+  sellerId: string;
+
   @UpdateDateColumn()
   updated_at: Date;
 

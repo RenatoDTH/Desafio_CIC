@@ -63,13 +63,18 @@ class BooksService {
           newArray = arrayofObjects.splice(0, 100);
 
           newArray.forEach(async el => {
-            const doesItExist = this.booksRepository.findOne(el);
+            const data = {
+              ...el,
+              seller: user.name,
+              sellerId: user.id,
+            };
+            const doesItExist = await this.booksRepository.findOne(data);
 
             if (doesItExist) {
               return;
             }
 
-            const book = this.booksRepository.create(el);
+            const book = this.booksRepository.create(data);
 
             await this.booksRepository.save(book);
           });
@@ -77,13 +82,19 @@ class BooksService {
           queryForOneHundred(array);
         } else {
           arrayofObjects.forEach(async el => {
-            const doesItExist = this.booksRepository.findOne(el);
+            const data = {
+              ...el,
+              seller: user.name,
+              sellerId: user.id,
+            };
+
+            const doesItExist = await this.booksRepository.findOne(data);
 
             if (doesItExist) {
               return;
             }
 
-            const book = this.booksRepository.create(el);
+            const book = this.booksRepository.create(data);
 
             await this.booksRepository.save(book);
           });
