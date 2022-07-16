@@ -13,6 +13,10 @@ interface userDto {
   isSeller?: boolean;
 }
 
+interface IUserResponse extends User {
+  success: boolean;
+}
+
 class UserService {
   private userRepository: Repository<User>;
 
@@ -20,7 +24,7 @@ class UserService {
     this.userRepository = getCustomRepository(UserRepository);
   }
 
-  async create(body: userDto): Promise<User> {
+  async create(body: userDto): Promise<IUserResponse> {
     const { name, phone, cpf, email } = body;
 
     const schema = Yup.object().shape({
@@ -90,7 +94,10 @@ class UserService {
 
     await this.userRepository.save(user);
 
-    return user;
+    return {
+      success: true,
+      ...user,
+    };
   }
 }
 
