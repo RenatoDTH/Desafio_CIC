@@ -15,5 +15,6 @@ routes.post(
   multer(uploadFile.getConfig).single('upload'),
   booksController.create,
 );
+routes.get('/books', booksController.index);
 
 export { routes };

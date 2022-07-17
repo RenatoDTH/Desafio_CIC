@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 import { Repository, getCustomRepository } from 'typeorm';
 import fs from 'fs';
 import { convertCSVToArray } from 'convert-csv-to-array';
@@ -110,6 +111,82 @@ class BooksService {
     } catch (err) {
       throw new AppError(stringify(err.message));
     }
+  }
+
+  async index(body) {
+    const {
+      publisher,
+      publicationDate,
+      title,
+      priceOrder,
+      publicationDateOrder,
+    } = body;
+
+    const books = await this.booksRepository.find();
+    const lowerPricesBooks = [];
+    books.map(el => {
+      const filteredByName = books.filter(
+        element => element.title === el.title,
+      );
+
+      if (filteredByName.length > 1) {
+        filteredByName.sort((a, b) => {
+          return a.price - b.price;
+        });
+
+        const checkExistence = lowerPricesBooks.find(
+          ele => ele === filteredByName[0],
+        );
+
+        if (checkExistence) {
+          return;
+        }
+
+        lowerPricesBooks.push(filteredByName[0]);
+      } else {
+        lowerPricesBooks.push(el);
+      }
+    });
+
+    if (publisher) {
+      const filter = lowerPricesBooks.filter(el => el.publisher === publisher);
+      if (filter.length) {
+        return filter;
+      }
+    }
+
+    if (publicationDate) {
+      const filter = lowerPricesBooks.filter(
+        el => el.publicationDate === publicationDate,
+      );
+      if (filter.length) {
+        return filter;
+      }
+    }
+
+    if (title) {
+      const filter = lowerPricesBooks.filter(el => el.title === title);
+      if (filter.length) {
+        return filter;
+      }
+    }
+
+    if (priceOrder) {
+      lowerPricesBooks.sort((a, b) => {
+        return a.price - b.price;
+      });
+    }
+
+    if (publicationDateOrder) {
+      lowerPricesBooks.sort((a, b) => {
+        const aDate: any = new Date(a.publicationDate);
+        const bDate: any = new Date(b.publicationDate);
+
+        return aDate - bDate;
+      });
+    }
+
+    return lowerPricesBooks;
   }
 }
 

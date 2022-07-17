@@ -27,6 +27,30 @@ class BooksController {
       message: 'Não é um tipo de arquivo válido',
     });
   }
+
+  async index(request: Request, response: Response): Promise<Response> {
+    const {
+      publisher,
+      publicationDate,
+      title,
+      priceOrder,
+      publicationDateOrder,
+    } = request.query;
+
+    const data = {
+      publisher,
+      publicationDate,
+      title,
+      priceOrder,
+      publicationDateOrder,
+    };
+
+    const booksService = new BooksService();
+
+    const books = await booksService.index(data);
+
+    return response.json(books);
+  }
 }
 
 export { BooksController };
