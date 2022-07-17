@@ -113,7 +113,7 @@ class BooksService {
     }
   }
 
-  async index(body) {
+  async index(body): Promise<any> {
     const {
       publisher,
       publicationDate,
@@ -187,6 +187,50 @@ class BooksService {
     }
 
     return lowerPricesBooks;
+  }
+
+  async buy(title): Promise<any> {
+    const books = await this.booksRepository.find({ title });
+
+    if (!books.length) {
+      return {
+        success: false,
+        message: 'Nenhum livro encontrado',
+      };
+    }
+
+    const lowerPricesBooks = [];
+    books.map(el => {
+      const filteredByName = books.filter(
+        element => element.title === el.title,
+      );
+
+      if (filteredByName.length > 1) {
+        filteredByName.sort((a, b) => {
+          return a.price - b.price;
+        });
+
+        const checkExistence = lowerPricesBooks.find(
+          ele => ele === filteredByName[0],
+        );
+
+        if (checkExistence) {
+          return;
+        }
+
+        lowerPricesBooks.push(filteredByName[0]);
+      } else {
+        lowerPricesBooks.push(el);
+      }
+    });
+
+    return {
+      success: true,
+      title: lowerPricesBooks[0].title,
+      authors: lowerPricesBooks[0].authors,
+      price: lowerPricesBooks[0].price,
+      seller: lowerPricesBooks[0].seller,
+    };
   }
 }
 

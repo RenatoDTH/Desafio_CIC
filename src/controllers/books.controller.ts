@@ -51,6 +51,16 @@ class BooksController {
 
     return response.json(books);
   }
+
+  async buy(request: Request, response: Response): Promise<Response> {
+    const { title } = request.body;
+
+    const booksService = new BooksService();
+
+    const books = await booksService.buy(title);
+
+    return response.json(books);
+  }
 }
 
 export { BooksController };

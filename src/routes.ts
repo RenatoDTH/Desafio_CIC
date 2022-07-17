@@ -16,5 +16,6 @@ routes.post(
   booksController.create,
 );
 routes.get('/books', booksController.index);
+routes.post('/books/buy', booksController.buy);
 
 export { routes };
