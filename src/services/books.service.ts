@@ -287,25 +287,47 @@ class BooksService {
     dataText = dataText.replace(/\s\s+/g, ' ');
 
     let titleFromRegex = dataText.match(regexTitle);
-    titleFromRegex = titleFromRegex[0].replace(/\t/g, ' ');
-    titleFromRegex = titleFromRegex.split('Title: ')[1];
-    dataToBeSaved.title = titleFromRegex;
+    if (titleFromRegex) {
+      titleFromRegex = titleFromRegex[0].replace(/\t/g, ' ');
+      titleFromRegex = titleFromRegex.split('Title: ')[1];
+    }
+
+    dataToBeSaved.title = titleFromRegex || 'N/A';
+
+    if (dataToBeSaved.title === 'N/A') {
+      return {
+        success: false,
+        message: 'Não foi possível pegar as informações do pdf',
+      };
+    }
 
     let authorFromRegex = dataText.match(regexAuthor);
-    authorFromRegex = authorFromRegex[0].replace(/\t/g, ' ');
-    authorFromRegex = authorFromRegex.split('Author: ')[1];
-    dataToBeSaved.authors = authorFromRegex;
+    if (authorFromRegex) {
+      authorFromRegex = authorFromRegex[0].replace(/\t/g, ' ');
+      authorFromRegex = authorFromRegex.split('Author: ')[1];
+    }
+    dataToBeSaved.authors = authorFromRegex || 'N/A';
 
     let publicationDateFromRegex = dataText.match(regexPublicationDate);
-    publicationDateFromRegex = publicationDateFromRegex[0].replace(/\t/g, ' ');
-    publicationDateFromRegex =
-      publicationDateFromRegex.split('Last Updated: ')[1];
-    const dateFormatted = formatDate(publicationDateFromRegex);
+    if (publicationDateFromRegex) {
+      publicationDateFromRegex = publicationDateFromRegex[0].replace(
+        /\t/g,
+        ' ',
+      );
+      publicationDateFromRegex =
+        publicationDateFromRegex.split('Last Updated: ')[1];
+    }
+    const dateFormatted = publicationDateFromRegex
+      ? formatDate(publicationDateFromRegex)
+      : '01/01/2000';
     dataToBeSaved.publicationDate = dateFormatted;
 
     let publisherFromRegex = dataText.match(regexPublisher);
-    publisherFromRegex = publisherFromRegex[0].replace(/\t/g, ' ');
-    dataToBeSaved.publisher = publisherFromRegex;
+    if (publisherFromRegex) {
+      publisherFromRegex = publisherFromRegex[0].replace(/\t/g, ' ');
+    }
+
+    dataToBeSaved.publisher = publisherFromRegex || 'N/A';
 
     const doesItExist = await this.booksRepository.findOne(dataToBeSaved);
 
