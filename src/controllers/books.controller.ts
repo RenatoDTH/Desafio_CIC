@@ -61,6 +61,33 @@ class BooksController {
 
     return response.json(books);
   }
+
+  async createByPdf(request: Request, response: Response): Promise<Response> {
+    if (request.file) {
+      const { name, email, price } = request.body;
+      const { filename, mimetype } = request.file;
+
+      const data = {
+        name,
+        email,
+        filename,
+        mimetype,
+        price,
+      };
+
+      const booksService = new BooksService();
+
+      const books = await booksService.createByPdf(data);
+
+      return response.json(books);
+    }
+    response.status(409);
+
+    return response.json({
+      sucess: false,
+      message: 'Não é um tipo de arquivo válido',
+    });
+  }
 }
 
 export { BooksController };

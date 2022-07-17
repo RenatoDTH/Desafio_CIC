@@ -17,5 +17,10 @@ routes.post(
 );
 routes.get('/books', booksController.index);
 routes.post('/books/buy', booksController.buy);
+routes.post(
+  '/books/pdf',
+  multer(uploadFile.getConfig).single('upload'),
+  booksController.createByPdf,
+);
 
 export { routes };

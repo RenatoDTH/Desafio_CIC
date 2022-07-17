@@ -1,18 +1,25 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable array-callback-return */
 import { Repository, getCustomRepository } from 'typeorm';
 import fs from 'fs';
 import { convertCSVToArray } from 'convert-csv-to-array';
 import { stringify } from 'querystring';
+import pdf from 'pdf-parse';
 import { Books, User } from '../entities';
 import { AppError } from '../errors/AppError';
 import { UserRepository } from '../repositories';
 import { BooksRepository } from '../repositories/books.repository';
+import { formatDate } from '../common';
 
-interface createBooksDto {
+export interface createBooksDto {
   name: string;
   email: string;
   filename: string;
   mimetype: string;
+}
+
+export interface submitOneBookDto extends createBooksDto {
+  price: number;
 }
 
 class BooksService {
@@ -43,6 +50,7 @@ class BooksService {
     }
 
     if (mimetype !== 'text/csv') {
+      fs.unlinkSync(`./upload/${filename}`);
       throw new AppError('Arquivo csv necessário');
     }
 
@@ -189,7 +197,7 @@ class BooksService {
     return lowerPricesBooks;
   }
 
-  async buy(title): Promise<any> {
+  async buy(title: string): Promise<any> {
     const books = await this.booksRepository.find({ title });
 
     if (!books.length) {
@@ -230,6 +238,91 @@ class BooksService {
       authors: lowerPricesBooks[0].authors,
       price: lowerPricesBooks[0].price,
       seller: lowerPricesBooks[0].seller,
+    };
+  }
+
+  async createByPdf(body: submitOneBookDto): Promise<any> {
+    const { email, filename, mimetype, price } = body;
+
+    const user = await this.userRepository.findOne({
+      email,
+    });
+
+    if (!user) {
+      throw new AppError('Usuário não existente!');
+    }
+
+    if (!user.isSeller) {
+      throw new AppError(
+        'Usuário não é vendedor. Ele não pode cadastrar o catálogo',
+      );
+    }
+
+    if (mimetype !== 'application/pdf') {
+      fs.unlinkSync(`./upload/${filename}`);
+      throw new AppError('Arquivo pdf necessário');
+    }
+
+    const contents = fs.readFileSync(`./upload/${filename}`);
+
+    const dataToBeSaved: any = {
+      seller: user.name,
+      sellerId: user.id,
+      price: Number(price),
+    };
+
+    let dataText: any;
+
+    const regexTitle = /Title:.+/g;
+    const regexAuthor = /Author:.+/g;
+    const regexPublicationDate = /Last.+Updated:.+/g;
+    const regexPublisher = /Project.+Gutenberg/g;
+
+    await pdf(contents).then(data => {
+      dataToBeSaved.numPages = data.numpages;
+      dataText = data.text;
+    });
+    dataText = dataText.replace(/\s\s+/g, ' ');
+
+    let titleFromRegex = dataText.match(regexTitle);
+    titleFromRegex = titleFromRegex[0].replace(/\t/g, ' ');
+    titleFromRegex = titleFromRegex.split('Title: ')[1];
+    dataToBeSaved.title = titleFromRegex;
+
+    let authorFromRegex = dataText.match(regexAuthor);
+    authorFromRegex = authorFromRegex[0].replace(/\t/g, ' ');
+    authorFromRegex = authorFromRegex.split('Author: ')[1];
+    dataToBeSaved.authors = authorFromRegex;
+
+    let publicationDateFromRegex = dataText.match(regexPublicationDate);
+    publicationDateFromRegex = publicationDateFromRegex[0].replace(/\t/g, ' ');
+    publicationDateFromRegex =
+      publicationDateFromRegex.split('Last Updated: ')[1];
+    const dateFormatted = formatDate(publicationDateFromRegex);
+    dataToBeSaved.publicationDate = dateFormatted;
+
+    let publisherFromRegex = dataText.match(regexPublisher);
+    publisherFromRegex = publisherFromRegex[0].replace(/\t/g, ' ');
+    dataToBeSaved.publisher = publisherFromRegex;
+
+    const doesItExist = await this.booksRepository.findOne(dataToBeSaved);
+
+    if (doesItExist) {
+      return {
+        success: false,
+        message: 'Este livro já foi cadastrado.',
+      };
+    }
+
+    const book = this.booksRepository.create(dataToBeSaved);
+
+    await this.booksRepository.save(book);
+
+    fs.unlinkSync(`./upload/${filename}`);
+
+    return {
+      success: true,
+      dataToBeSaved,
     };
   }
 }
