@@ -295,6 +295,7 @@ class BooksService {
     dataToBeSaved.title = titleFromRegex || 'N/A';
 
     if (dataToBeSaved.title === 'N/A') {
+      fs.unlinkSync(`./upload/${filename}`);
       return {
         success: false,
         message: 'Não foi possível pegar as informações do pdf',
