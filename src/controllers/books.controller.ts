@@ -37,7 +37,7 @@ class BooksController {
       publicationDateOrder,
     } = request.query;
 
-    const data = {
+    const data: any = {
       publisher,
       publicationDate,
       title,

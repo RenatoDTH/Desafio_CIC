@@ -4,18 +4,7 @@ import { getCustomRepository, Repository } from 'typeorm';
 import { AppError } from '../errors/AppError';
 import { UserRepository } from '../repositories';
 import { User } from '../entities';
-
-interface userDto {
-  name: string;
-  phone: string;
-  cpf: string;
-  email: string;
-  isSeller?: boolean;
-}
-
-interface IUserResponse extends User {
-  success: boolean;
-}
+import { IUserRequest, IUserResponse } from '../interfaces';
 
 class UserService {
   private userRepository: Repository<User>;
@@ -24,7 +13,7 @@ class UserService {
     this.userRepository = getCustomRepository(UserRepository);
   }
 
-  async create(body: userDto): Promise<IUserResponse> {
+  async create(body: IUserRequest): Promise<IUserResponse> {
     const { name, phone, cpf, email } = body;
 
     const schema = Yup.object().shape({
@@ -47,7 +36,7 @@ class UserService {
         ),
     });
 
-    const data: userDto = {
+    const data: IUserRequest = {
       name,
       phone,
       cpf,

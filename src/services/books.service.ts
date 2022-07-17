@@ -10,17 +10,17 @@ import { AppError } from '../errors/AppError';
 import { UserRepository } from '../repositories';
 import { BooksRepository } from '../repositories/books.repository';
 import { formatDate } from '../common';
-
-export interface createBooksDto {
-  name: string;
-  email: string;
-  filename: string;
-  mimetype: string;
-}
-
-export interface submitOneBookDto extends createBooksDto {
-  price: number;
-}
+import {
+  ICreateBooksRequest,
+  ICreateBookResponse,
+  IIndexRequest,
+  IIndexResponse,
+  IBuyResponse,
+  IBuyNoResponse,
+  ISubmitOneBookRequest,
+  ISubmitByPdfResponse,
+  ISubmitByPdfNoResponse,
+} from '../interfaces';
 
 class BooksService {
   private userRepository: Repository<User>;
@@ -32,7 +32,7 @@ class BooksService {
     this.booksRepository = getCustomRepository(BooksRepository);
   }
 
-  async create(body: createBooksDto): Promise<any> {
+  async create(body: ICreateBooksRequest): Promise<ICreateBookResponse> {
     const { email, filename, mimetype } = body;
 
     const user = await this.userRepository.findOne({
@@ -121,7 +121,7 @@ class BooksService {
     }
   }
 
-  async index(body): Promise<any> {
+  async index(body: IIndexRequest): Promise<IIndexResponse | IIndexResponse[]> {
     const {
       publisher,
       publicationDate,
@@ -197,7 +197,7 @@ class BooksService {
     return lowerPricesBooks;
   }
 
-  async buy(title: string): Promise<any> {
+  async buy(title: string): Promise<IBuyResponse | IBuyNoResponse> {
     const books = await this.booksRepository.find({ title });
 
     if (!books.length) {
@@ -241,7 +241,9 @@ class BooksService {
     };
   }
 
-  async createByPdf(body: submitOneBookDto): Promise<any> {
+  async createByPdf(
+    body: ISubmitOneBookRequest,
+  ): Promise<ISubmitByPdfResponse | ISubmitByPdfNoResponse> {
     const { email, filename, mimetype, price } = body;
 
     const user = await this.userRepository.findOne({
